@@ -2,15 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Mental Health Signal — Student Wellness Analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
-</head>S
+
+<meta name="theme-color" content="#163D33" />
+</head>
 <body>
 
+<div class="ambient-glow" aria-hidden="true">
+  <span class="blob blob-a"></span>
+  <span class="blob blob-b"></span>
+</div>
 <div class="noise-overlay" aria-hidden="true"></div>
 
 <header class="site-header">
@@ -154,6 +160,7 @@
           <div class="field field-span">
             <label for="stress_level">Perceived stress level</label>
             <div class="segmented" id="stress_level_group" data-name="stress_level">
+              <span class="seg-indicator" id="seg-indicator" aria-hidden="true"></span>
               <button type="button" class="seg-btn" data-value="Low">Low</button>
               <button type="button" class="seg-btn" data-value="Medium">Medium</button>
               <button type="button" class="seg-btn" data-value="High">High</button>

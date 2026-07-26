@@ -51,13 +51,39 @@
   // ---------------------------------------------------------
   const segGroup = document.getElementById("stress_level_group");
   const stressHiddenInput = document.getElementById("stress_level");
+  const segIndicator = document.getElementById("seg-indicator");
+
+  function moveSegIndicator(btn, animate = true) {
+    if (!btn || !segIndicator) return;
+    const groupRect = segGroup.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    if (!animate) segIndicator.style.transition = "none";
+    segIndicator.style.width = `${btnRect.width}px`;
+    segIndicator.style.height = `${btnRect.height}px`;
+    segIndicator.style.transform = `translate(${btnRect.left - groupRect.left}px, ${btnRect.top - groupRect.top}px)`;
+    segIndicator.classList.add("visible");
+    segIndicator.classList.toggle("tone-high", btn.dataset.value === "High");
+    segIndicator.classList.toggle("tone-very-high", btn.dataset.value === "Very High");
+    if (!animate) {
+      // force reflow so the transition re-applies on the next change
+      void segIndicator.offsetWidth;
+      segIndicator.style.transition = "";
+    }
+  }
+
   segGroup.querySelectorAll(".seg-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       segGroup.querySelectorAll(".seg-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       stressHiddenInput.value = btn.dataset.value;
       clearFieldError(stressHiddenInput);
+      moveSegIndicator(btn);
     });
+  });
+
+  window.addEventListener("resize", () => {
+    const activeBtn = segGroup.querySelector(".seg-btn.active");
+    if (activeBtn) moveSegIndicator(activeBtn, false);
   });
 
   // ---------------------------------------------------------
@@ -73,6 +99,10 @@
     wrap.classList.add("field-error");
     const msgEl = wrap.querySelector(".error-msg");
     if (msgEl) msgEl.textContent = message;
+    wrap.classList.remove("shake");
+    void wrap.offsetWidth; // restart animation if it's already shaking
+    wrap.classList.add("shake");
+    wrap.addEventListener("animationend", () => wrap.classList.remove("shake"), { once: true });
   }
 
   function clearFieldError(input) {
@@ -166,27 +196,46 @@
       return {
         label: "Signal: strained",
         context: "Your responses suggest elevated strain right now. Small shifts in sleep or screen time can go a long way.",
+        tone: "strained",
       };
     }
     if (score < 7) {
       return {
         label: "Signal: balanced",
         context: "Your rhythm looks fairly steady, with some room to recover and reset.",
+        tone: "balanced",
       };
     }
     return {
       label: "Signal: strong",
       context: "Your habits point to a well-supported, resilient baseline. Keep it up.",
+      tone: "strong",
     };
+  }
+
+  function animateScoreNumber(target, duration = 900) {
+    const start = performance.now();
+    const ease = (t) => 1 - Math.pow(1 - t, 3); // ease-out cubic
+    function tick(now) {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = ease(progress);
+      scoreNumberEl.textContent = (target * eased).toFixed(2);
+      if (progress < 1) requestAnimationFrame(tick);
+      else scoreNumberEl.textContent = target.toFixed(2);
+    }
+    requestAnimationFrame(tick);
   }
 
   function renderResult(score) {
     const clamped = Math.max(0, Math.min(10, score));
-    const { label, context } = bandFor(clamped);
+    const { label, context, tone } = bandFor(clamped);
 
-    scoreNumberEl.textContent = score.toFixed(2);
+    animateScoreNumber(score);
     scoreBandEl.textContent = label;
     scoreContextEl.textContent = context;
+
+    stateResult.classList.remove("tone-strong", "tone-balanced", "tone-strained");
+    stateResult.classList.add(`tone-${tone}`);
 
     // reset then animate the arc fill on next frame
     gaugeFill.style.transition = "none";
